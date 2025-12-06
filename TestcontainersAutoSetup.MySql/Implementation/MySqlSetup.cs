@@ -1,7 +1,7 @@
 ﻿using DotNet.Testcontainers.Containers;
+using Microsoft.EntityFrameworkCore;
 using Testcontainers.Core.Abstractions;
 using Testcontainers.MySql;
-using TestcontainersAutoSetup.Core.Abstractions;
 using TestcontainersAutoSetup.Core.Implementation;
 
 namespace TestcontainersAutoSetup.MySql.Implementation;
@@ -57,5 +57,10 @@ public class MySqlSetup : IContainerSetup
         // await orchestrator.InitializeAsync();
 
         return container;
+    }
+
+    public Task<IContainer> BuildAndInitializeWithEfContextAsync<T>() where T : DbContext
+    {
+        throw new NotImplementedException();
     }
 }

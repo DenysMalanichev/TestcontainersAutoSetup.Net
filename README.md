@@ -12,3 +12,15 @@ sudo vim /etc/systemd/system/docker.service.d/override.conf
 ExecStart=
 ExecStart=/usr/bin/dockerd --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock
 ```
+
+## Entity Framework Core
+Simply call the WithEFCoreMigrations method followed by the BuildAndInitializeWithEfContextAsync specifying a ***DataContext*** class as generic parameter.
+
+*Make sure that data for seeding is manually placed in migrations or use a **.HasData()** method*
+```C#
+var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
+var msSqlContainer = await builder.CreateSqlServerContainer()
+    .UseDatabaseName("DbName")
+    .WithEFCoreMigrations()
+    .BuildAndInitializeWithEfContextAsync<CatalogContext>();
+```
