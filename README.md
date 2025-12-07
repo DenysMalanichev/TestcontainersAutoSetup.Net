@@ -12,6 +12,7 @@ sudo vim /etc/systemd/system/docker.service.d/override.conf
 ExecStart=
 ExecStart=/usr/bin/dockerd --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock
 ```
+> **NOTE:** change the Docker daemon port configured in appsettings.local.json in case it is not 2375 (*DockerPort* setting)
 
 ## Entity Framework Core
 Simply call the WithEFCoreMigrations method followed by the BuildAndInitializeWithEfContextAsync specifying a ***DataContext*** class as generic parameter.

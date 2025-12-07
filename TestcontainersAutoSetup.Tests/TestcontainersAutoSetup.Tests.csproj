@@ -13,6 +13,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
@@ -22,7 +24,11 @@
         <ProjectReference Include="..\TestcontainersAutoSetup.Core\TestcontainersAutoSetup.Core.csproj" />
         <ProjectReference Include="..\TestcontainersAutoSetup.MySql\TestcontainersAutoSetup.MySql.csproj" />
         <ProjectReference Include="..\TestcontainersAutoSetup.SqlServer\TestcontainersAutoSetup.SqlServer.csproj" />
-    </ItemGroup>
+   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.local.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
