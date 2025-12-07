@@ -1,9 +1,9 @@
-namespace TestcontainersAutoSetup.Core.Enums
+namespace TestcontainersAutoSetup.Core.Enums;
+
+public enum MigrationType
 {
-    public enum MigrationType
-    {
-        EFCore,
-        Liquibase,
-        Dump
-    }
+    EFCore,
+    Liquibase,
+    Dump,
+    None
 }

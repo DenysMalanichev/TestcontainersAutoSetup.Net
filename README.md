@@ -25,3 +25,13 @@ var msSqlContainer = await builder.CreateSqlServerContainer()
     .WithEFCoreMigrations()
     .BuildAndInitializeWithEfContextAsync<CatalogContext>();
 ```
+## Multiple DBs within one container
+It is possible to create more then one DB in a container, with distinct names and data
+```C#
+var msSqlContainer = await builder.CreateSqlServerContainer()
+    .AddDatabase(new EFCoreMigration<CatalogContext>())
+    .UseDatabaseName("Catalog")
+    .AddDatabase(new EFCoreMigration<TenantContext>())
+    .UseDatabaseName("Tenant")
+    .BuildAndInitializeAsync();
+```

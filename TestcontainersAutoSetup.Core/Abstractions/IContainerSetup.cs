@@ -8,5 +8,4 @@ public interface IContainerSetup
 {
     AutoSetupContainerBuilder And();
     Task<IContainer> BuildAndInitializeAsync();
-    Task<IContainer> BuildAndInitializeWithEfContextAsync<T>() where T : DbContext;
 }

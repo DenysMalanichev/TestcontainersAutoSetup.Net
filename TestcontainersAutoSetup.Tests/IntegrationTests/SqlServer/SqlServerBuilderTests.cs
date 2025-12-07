@@ -7,6 +7,7 @@ using Testcontainers.MsSql;
 using System.Data.SqlTypes;
 using System.Text;
 using TestcontainersAutoSetup.Tests.Helpers;
+using TestcontainersAutoSetup.Core.Common.Entities.DbMigrationTypes;
 
 namespace TestcontainersAutoSetup.Tests.IntegrationTests.SqlServer;
 
@@ -19,8 +20,8 @@ public class SqlServerBuilderTests
     {
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
         var msSqlContainer = await builder.CreateSqlServerContainer()
-            .WithEFCoreMigrations()
-            .BuildAndInitializeWithEfContextAsync<CatalogContext>();
+            .AddDatabase(new EFCoreMigration<CatalogContext>())
+            .BuildAndInitializeAsync();
 
         string connectionString = ((MsSqlContainer)msSqlContainer).GetConnectionString();
 
@@ -39,8 +40,8 @@ public class SqlServerBuilderTests
     {
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
         var msSqlContainer = await builder.CreateSqlServerContainer()
-            .WithEFCoreMigrations()
-            .BuildAndInitializeWithEfContextAsync<CatalogContext>();
+            .AddDatabase(new EFCoreMigration<CatalogContext>())
+            .BuildAndInitializeAsync();
 
         await Task.Delay(10_000);
         Assert.NotEqual(msSqlContainer.CreatedTime, default);
@@ -63,9 +64,9 @@ public class SqlServerBuilderTests
         const string dbName = "CatalogTestDatabase";
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
         var msSqlContainer = await builder.CreateSqlServerContainer()
+            .AddDatabase(new EFCoreMigration<CatalogContext>())
             .UseDatabaseName(dbName)
-            .WithEFCoreMigrations()
-            .BuildAndInitializeWithEfContextAsync<CatalogContext>();
+            .BuildAndInitializeAsync();
 
         await Task.Delay(10_000);
         Assert.NotEqual(msSqlContainer.CreatedTime, default);
@@ -83,5 +84,48 @@ public class SqlServerBuilderTests
         var count = (int)(await command.ExecuteScalarAsync() ?? throw new SqlNullValueException());
 
         Assert.Equal(4, count);
+    }
+
+    [Fact]
+    public async Task ContainerBuilder_CreatesSqlServerContainer_WithMultipleDatabases()
+    {
+        const string dbName1 = "CatalogTestDatabase1";
+        const string dbName2 = "CatalogTestDatabase2";
+        var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
+        var msSqlContainer = await builder.CreateSqlServerContainer()
+            .AddDatabase(new EFCoreMigration<CatalogContext>())
+            .UseDatabaseName(dbName1)
+            .AddDatabase(new EFCoreMigration<CatalogContext>())
+            .UseDatabaseName(dbName2)
+            .BuildAndInitializeAsync();
+
+        await Task.Delay(10_000);
+        Assert.NotEqual(msSqlContainer.CreatedTime, default);
+        Assert.Equal(TestcontainersStates.Running, msSqlContainer.State);
+
+        string connectionString = ((MsSqlContainer)msSqlContainer).GetConnectionString();
+        var connStrBuilder = new StringBuilder(connectionString);
+        connStrBuilder.Append(";Database=").Append(dbName1);
+
+        // Checking for migrations to ensure that db created
+        using var connection = new SqlConnection(connStrBuilder.ToString());
+        await connection.OpenAsync();
+
+        using var command = new SqlCommand("SELECT COUNT(*) FROM CatalogTypes", connection);
+        var count = (int)(await command.ExecuteScalarAsync() ?? throw new SqlNullValueException());
+
+        Assert.Equal(4, count);
+
+        string connectionString2 = ((MsSqlContainer)msSqlContainer).GetConnectionString();
+        var connStrBuilder2 = new StringBuilder(connectionString);
+        connStrBuilder2.Append(";Database=").Append(dbName1);
+
+        // Checking for migrations to ensure that db created
+        using var connection2 = new SqlConnection(connStrBuilder2.ToString());
+        await connection2.OpenAsync();
+
+        var count2 = (int)(await command.ExecuteScalarAsync() ?? throw new SqlNullValueException());
+
+        Assert.Equal(4, count2);
     }
 }

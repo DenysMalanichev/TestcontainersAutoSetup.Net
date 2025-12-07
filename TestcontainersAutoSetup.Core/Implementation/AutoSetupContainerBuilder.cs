@@ -21,18 +21,6 @@ public class AutoSetupContainerBuilder : IAutoSetupContainerBuilder
         DockerEndpoint = string.Empty;
     }
 
-    /// <summary>
-    /// The creation of DB snapshot will be skipped and containers will be automatically destroyed,
-    /// if tests are running in CI.
-    /// </summary>
-    /// <param name="isLocalRun">Boolean representing if a run is on local machine</param>
-    /// <returns></returns>
-    public AutoSetupContainerBuilder IsLocalRun(bool isLocalRun)
-    {
-        IsRunningInCI = !isLocalRun;
-        return this;
-    }
-
     public void AddContainerSetup(IContainerSetup setup)
     {
         _containerSetups.Add(setup);
@@ -59,8 +47,15 @@ public class AutoSetupContainerBuilder : IAutoSetupContainerBuilder
         throw new NotImplementedException();
     }
 
-    IAutoSetupContainerBuilder IAutoSetupContainerBuilder.IsLocalRun(bool isLocalRun)
+    /// <summary>
+    /// The creation of DB snapshot will be skipped and containers will be automatically destroyed,
+    /// if tests are running in CI.
+    /// </summary>
+    /// <param name="isLocalRun">Boolean representing if a run is on local machine</param>
+    /// <returns></returns>
+    public IAutoSetupContainerBuilder IsLocalRun(bool isLocalRun)
     {
-        return IsLocalRun(isLocalRun);
+        IsRunningInCI = !isLocalRun;
+        return this;
     }
 }

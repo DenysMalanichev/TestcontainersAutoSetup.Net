@@ -4,9 +4,9 @@ namespace TestcontainersAutoSetup.SqlServer.Implementation;
 
 public static class SqlServerContainerBuilderExtensions
 {
-    public static SqlServerSetup CreateSqlServerContainer(this AutoSetupContainerBuilder builder)
+    public static SqlServerContainerBuilder CreateSqlServerContainer(this AutoSetupContainerBuilder builder)
     {
-        var sqlServerSetup = new SqlServerSetup(builder);
+        var sqlServerSetup = new SqlServerContainerBuilder(builder);
 
         builder.AddContainerSetup(sqlServerSetup);
 

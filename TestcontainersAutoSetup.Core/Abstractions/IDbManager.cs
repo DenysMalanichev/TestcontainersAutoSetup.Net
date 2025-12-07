@@ -6,11 +6,6 @@ public interface IDbManager<TContainer>
     where TContainer : IContainer
 {
     /// <summary>
-    /// Applies the database migrations (e.g., runs Liquibase update, EF Core migrations).
-    /// </summary>
-    Task ApplyMigrationsAsync();
-
-    /// <summary>
     /// Gets the timestamp of the most recently modified migration script.
     /// </summary>
     /// <returns>A UTC DateTime of the last modification.</returns>
