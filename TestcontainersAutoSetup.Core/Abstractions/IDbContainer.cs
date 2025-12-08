@@ -11,4 +11,6 @@ public interface IDbContainer : IContainerSetup
     IDbContainer AddDatabase(DbSetup dbSetup);
 
     public IDbContainer UseDatabaseName(string dbName);
+
+    public IDbContainer WithMigrationsPath(string path);
 }

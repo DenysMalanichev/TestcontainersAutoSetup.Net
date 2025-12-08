@@ -1,4 +1,5 @@
 using DotNet.Testcontainers.Containers;
+using Microsoft.Extensions.DependencyInjection;
 using TestcontainersAutoSetup.Core.Implementation;
 using TestcontainersAutoSetup.MySql.Implementation;
 using TestcontainersAutoSetup.SqlServer.Implementation;
@@ -9,6 +10,7 @@ namespace TestcontainersAutoSetup.Tests.IntegrationTests.Core;
 public class ContainerBuidlerTests
 {
     private readonly string? dockerEndpoint = DockerAddressHelper.GetDockerEndpoint();
+    private readonly IServiceProvider emptyServiceProvider = new ServiceCollection().BuildServiceProvider();
 
     [Fact]
     public async Task ContainerBuilder_CreatesMySqlContainer()
@@ -26,7 +28,7 @@ public class ContainerBuidlerTests
     public async Task ContainerBuilder_CreatesSqlServerContainers()
     {
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
-        var sqlServerContainer = await builder.CreateSqlServerContainer()
+        var sqlServerContainer = await builder.CreateSqlServerContainer(emptyServiceProvider)
             .BuildAndInitializeAsync();
 
         Assert.NotEqual(default, sqlServerContainer.CreatedTime);
@@ -40,7 +42,7 @@ public class ContainerBuidlerTests
         var containers = await builder.CreateMySqlContainer()
             .WithDatabase("TestDb")
             .And()
-            .CreateSqlServerContainer()
+            .CreateSqlServerContainer(emptyServiceProvider)
             .And()
             .BuildAsync();
 

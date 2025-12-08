@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using TestcontainersAutoSetup.Core.Common;
 
 namespace TestcontainersAutoSetup.Core.Abstractions;
-public interface IMigrator
+public interface IMigrationRunner
 {
-    Task ApplyEFCoreMigrationsAsync<TContext>(IContainer container, DatabaseConnection connection) 
+    Task ApplyEfCoreMigrationAsync<TContext>(IContainer container, DatabaseConnection connection) 
         where TContext : DbContext;
 }

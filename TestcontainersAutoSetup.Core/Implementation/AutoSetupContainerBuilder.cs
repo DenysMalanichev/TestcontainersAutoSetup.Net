@@ -1,32 +1,19 @@
-﻿using System.Runtime.InteropServices;
-using DotNet.Testcontainers.Containers;
-using Testcontainers.Core.Abstractions;
+﻿using DotNet.Testcontainers.Containers;
 using TestcontainersAutoSetup.Core.Abstractions;
 
 namespace TestcontainersAutoSetup.Core.Implementation;
-public class AutoSetupContainerBuilder : IAutoSetupContainerBuilder
+public class AutoSetupContainerBuilder : AbstractAutoSetupContainerBuilder
 {
-    private readonly List<IContainerSetup> _containerSetups = new();
-    private static readonly bool _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-    public string DockerEndpoint { get; private set; }
-    private bool IsRunningInCI { get; set; }
 
-    public AutoSetupContainerBuilder(string dockerEndpoint)
+    public AutoSetupContainerBuilder() : base()
     {
-        DockerEndpoint = dockerEndpoint;   
     }
 
-    public AutoSetupContainerBuilder()
+    public AutoSetupContainerBuilder(string dockerEndpoint) : base(dockerEndpoint)
     {
-        DockerEndpoint = string.Empty;
     }
 
-    public void AddContainerSetup(IContainerSetup setup)
-    {
-        _containerSetups.Add(setup);
-    }
-
-    public async Task<List<IContainer>> BuildAsync()
+    public override async Task<List<IContainer>> BuildAsync()
     {
         var containers = new List<IContainer>();
         foreach (var setup in _containerSetups)
@@ -35,27 +22,5 @@ public class AutoSetupContainerBuilder : IAutoSetupContainerBuilder
             containers.Add(container);
         }
         return containers;
-    }
-
-    public IAutoSetupContainerBuilder WithMySqlContainer()
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAutoSetupContainerBuilder WithMongoDbContainer()
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <summary>
-    /// The creation of DB snapshot will be skipped and containers will be automatically destroyed,
-    /// if tests are running in CI.
-    /// </summary>
-    /// <param name="isLocalRun">Boolean representing if a run is on local machine</param>
-    /// <returns></returns>
-    public IAutoSetupContainerBuilder IsLocalRun(bool isLocalRun)
-    {
-        IsRunningInCI = !isLocalRun;
-        return this;
     }
 }

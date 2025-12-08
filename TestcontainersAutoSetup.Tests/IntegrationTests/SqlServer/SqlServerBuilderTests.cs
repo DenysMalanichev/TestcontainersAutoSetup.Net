@@ -8,18 +8,21 @@ using System.Data.SqlTypes;
 using System.Text;
 using TestcontainersAutoSetup.Tests.Helpers;
 using TestcontainersAutoSetup.Core.Common.Entities.DbMigrationTypes;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 
 namespace TestcontainersAutoSetup.Tests.IntegrationTests.SqlServer;
 
 public class SqlServerBuilderTests
 {
     private readonly string? dockerEndpoint = DockerAddressHelper.GetDockerEndpoint();
+    private readonly IServiceProvider emptyServiceProvider = new ServiceCollection().BuildServiceProvider();
 
     [Fact]
     public async Task ContainerBuilder_CreatesSqlServerContainer_ApplyingEFCoreMigrations()
     {
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
-        var msSqlContainer = await builder.CreateSqlServerContainer()
+        var msSqlContainer = await builder.CreateSqlServerContainer(emptyServiceProvider)
             .AddDatabase(new EFCoreMigration<CatalogContext>())
             .BuildAndInitializeAsync();
 
@@ -39,7 +42,7 @@ public class SqlServerBuilderTests
     public async Task ContainerBuilder_CreatesSqlServerContainer_SeedingData()
     {
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
-        var msSqlContainer = await builder.CreateSqlServerContainer()
+        var msSqlContainer = await builder.CreateSqlServerContainer(emptyServiceProvider)
             .AddDatabase(new EFCoreMigration<CatalogContext>())
             .BuildAndInitializeAsync();
 
@@ -63,7 +66,7 @@ public class SqlServerBuilderTests
     {
         const string dbName = "CatalogTestDatabase";
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
-        var msSqlContainer = await builder.CreateSqlServerContainer()
+        var msSqlContainer = await builder.CreateSqlServerContainer(emptyServiceProvider)
             .AddDatabase(new EFCoreMigration<CatalogContext>())
             .UseDatabaseName(dbName)
             .BuildAndInitializeAsync();
@@ -87,19 +90,43 @@ public class SqlServerBuilderTests
     }
 
     [Fact]
+    public async Task ContainerBuilder_CreatesSqlServerContainer_FromProvidedDiDbContext()
+    {
+        // Arrange
+        const string dbName = "CatalogTestDatabase";
+        var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
+        var services = new ServiceCollection();
+        services.AddSingleton<ITenantProvider, TenantProviderMock>(); // Create a dummy dependency to validate DI context
+        var provider = services.BuildServiceProvider();
+
+        // Act
+        var msSqlContainer = await builder.CreateSqlServerContainer(provider)
+            .AddDatabase(new EFCoreMigration<CatalogTenantDependantContext>())
+            .UseDatabaseName(dbName)
+            .BuildAndInitializeAsync();
+
+        // Assert
+        Assert.NotEqual(msSqlContainer.CreatedTime, default);
+        Assert.Equal(TestcontainersStates.Running, msSqlContainer.State);
+
+        string connectionString = ((MsSqlContainer)msSqlContainer).GetConnectionString();
+        var connStrBuilder = new StringBuilder(connectionString);
+        connStrBuilder.Append(";Database=").Append(dbName);
+    }
+
+    [Fact]
     public async Task ContainerBuilder_CreatesSqlServerContainer_WithMultipleDatabases()
     {
         const string dbName1 = "CatalogTestDatabase1";
         const string dbName2 = "CatalogTestDatabase2";
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
-        var msSqlContainer = await builder.CreateSqlServerContainer()
+        var msSqlContainer = await builder.CreateSqlServerContainer(emptyServiceProvider)
             .AddDatabase(new EFCoreMigration<CatalogContext>())
             .UseDatabaseName(dbName1)
             .AddDatabase(new EFCoreMigration<CatalogContext>())
             .UseDatabaseName(dbName2)
             .BuildAndInitializeAsync();
 
-        await Task.Delay(10_000);
         Assert.NotEqual(msSqlContainer.CreatedTime, default);
         Assert.Equal(TestcontainersStates.Running, msSqlContainer.State);
 

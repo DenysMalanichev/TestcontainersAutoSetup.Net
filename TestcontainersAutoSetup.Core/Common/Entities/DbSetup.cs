@@ -1,5 +1,6 @@
 using System.Text;
 using DotNet.Testcontainers.Containers;
+using TestcontainersAutoSetup.Core.Abstractions;
 using TestcontainersAutoSetup.Core.Enums;
 
 namespace TestcontainersAutoSetup.Core.Common.Entities;
@@ -10,7 +11,10 @@ public abstract class DbSetup
     public string? DbName { get; set; }
     public string? MigrationsPath { get; set; }
 
-    public abstract Task ExecuteAsync(IContainer container, DatabaseConnection connection);
+    public abstract Task ExecuteAsync(
+        IMigrationRunner migrationRunner,
+        IContainer container,
+        DatabaseConnection connection);
 
     public string BuildConnectionString(string containerConnStr)
     {

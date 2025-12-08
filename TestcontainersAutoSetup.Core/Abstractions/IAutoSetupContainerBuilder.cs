@@ -1,18 +1,25 @@
-
-
 using DotNet.Testcontainers.Containers;
+using Testcontainers.Core.Abstractions;
 
 namespace TestcontainersAutoSetup.Core.Abstractions;
 
-public partial interface IAutoSetupContainerBuilder
+public abstract partial class AbstractAutoSetupContainerBuilder
 {
-    public IAutoSetupContainerBuilder WithMySqlContainer();
+    protected readonly List<IContainerSetup> _containerSetups = new();
+    public string DockerEndpoint { get; private set; }
 
-    public IAutoSetupContainerBuilder WithMongoDbContainer();
+    public AbstractAutoSetupContainerBuilder(string dockerEndpoint)
+    {
+        DockerEndpoint = dockerEndpoint;   
+    }
 
-    public IAutoSetupContainerBuilder IsLocalRun(bool isLocalRun);
+    public AbstractAutoSetupContainerBuilder() : this(string.Empty)
+    {
+    }
 
-    public string DockerEndpoint { get; }
-
-    public Task<List<IContainer>> BuildAsync();
+    public void AddContainerSetup(IContainerSetup setup)
+    {
+        _containerSetups.Add(setup);
+    }
+    public abstract Task<List<IContainer>> BuildAsync();
 }
