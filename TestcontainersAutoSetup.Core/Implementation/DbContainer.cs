@@ -53,4 +53,12 @@ public abstract class DbContainer : ContainerSetup, IDbContainer
 
         return this;
     }
+
+    public IDbContainer RestoreFromDump(bool restoreFromDump = true)
+    {
+        var dbSetup = GetConfiguringDbSetup();
+        dbSetup.RestoreFromDump = restoreFromDump;
+
+        return this;
+    }
 }

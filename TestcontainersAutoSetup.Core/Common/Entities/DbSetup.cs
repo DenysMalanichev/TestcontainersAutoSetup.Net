@@ -10,6 +10,7 @@ public abstract class DbSetup
     public MigrationType MigrationType { get; set; }
     public string? DbName { get; set; }
     public string? MigrationsPath { get; set; }
+    public bool RestoreFromDump { get; set; } = false;
 
     public abstract Task ExecuteAsync(
         IMigrationRunner migrationRunner,

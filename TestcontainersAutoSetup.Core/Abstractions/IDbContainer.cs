@@ -12,5 +12,7 @@ public interface IDbContainer : IContainerSetup
 
     public IDbContainer UseDatabaseName(string dbName);
 
+    public IDbContainer RestoreFromDump(bool RestoreFromDump = true);
+
     public IDbContainer WithMigrationsPath(string path);
 }
