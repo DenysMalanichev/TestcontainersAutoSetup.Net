@@ -11,7 +11,6 @@ public class EFCoreMigration<TContext> : DbSetup
 {
     private static readonly bool IsWindows = OperatingSystem.IsWindows();
     private const string SnapshotsDirectory = "Snapshots";
-    private readonly bool _recreateFromDump;
 
     // public EFCoreManager(bool tryRecreateFromDump = false)
     // {
@@ -173,7 +172,7 @@ public class EFCoreMigration<TContext> : DbSetup
         IMigrationRunner migrationRunner, IContainer container, DatabaseConnection connection)
     {
         // TODO add dump logic
-        if (_recreateFromDump)
+        if (RestoreFromDump)
         {
             await InitializeDatabaseWithDumpAsync(container, connection);
             return;
