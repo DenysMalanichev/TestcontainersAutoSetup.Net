@@ -17,9 +17,11 @@ public abstract partial class AbstractAutoSetupContainerBuilder
     {
     }
 
-    public void AddContainerSetup(IContainerSetup setup)
+    public void AddContainerSetup<TContainer>(IContainerSetup<TContainer> setup)
+        where TContainer : IContainer
     {
         _containerSetups.Add(setup);
     }
+
     public abstract Task<List<IContainer>> BuildAsync();
 }

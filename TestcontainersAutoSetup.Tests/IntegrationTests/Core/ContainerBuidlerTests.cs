@@ -16,7 +16,7 @@ public class ContainerBuidlerTests
     public async Task ContainerBuilder_CreatesMySqlContainer()
     {
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
-        var mySqlContainer = await builder.CreateMySqlContainer()
+        var mySqlContainer = await builder.CreateMySqlContainer(emptyServiceProvider)
             .WithDatabase("TestDb")
             .BuildAndInitializeAsync();
 
@@ -39,7 +39,7 @@ public class ContainerBuidlerTests
     public async Task ContainerBuilder_CreatesBothSqlServerAndMySqlContainers()
     {
         var builder = new AutoSetupContainerBuilder(dockerEndpoint!);
-        var containers = await builder.CreateMySqlContainer()
+        var containers = await builder.CreateMySqlContainer(emptyServiceProvider)
             .WithDatabase("TestDb")
             .And()
             .CreateSqlServerContainer(emptyServiceProvider)
