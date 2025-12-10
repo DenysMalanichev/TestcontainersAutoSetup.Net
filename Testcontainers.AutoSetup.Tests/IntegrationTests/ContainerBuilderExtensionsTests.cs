@@ -8,7 +8,7 @@ using Testcontainers.AutoSetup.Core.Helpers;
 using Testcontainers.AutoSetup.Tests.TestCollections;
 using Testcontainers.MsSql;
 
-namespace Testcontainers.AutoSetup.Tests;
+namespace Testcontainers.AutoSetup.Tests.IntegrationTests;
 
 [Trait("Category", "Integration")]
 [Collection(nameof(ParallelTests))]
@@ -76,10 +76,11 @@ public class ContainerBuilderExtensionsTests
         var container = builder
             .WithName("GenericMsSQL-testcontainer")
             .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
-            .WithPortBinding(1433, systemPort)
+            .WithPortBinding(systemPort, 1433)
             .WithEnvironment("ACCEPT_EULA", "Y")
             .WithEnvironment("SA_PASSWORD", "YourStrongPassword123!")
             .WithReuse(reuse: !DockerHelper.IsCiRun())
+            .WithLabel("reuse-id", "GenericMsSQL-testcontainer-reuse-hash")
             .WithDbSeeder(
                 seederMock.Object,
                 _ => $"Server=localhost,{systemPort};Database=master;User ID=sa;Password=YourStrongPassword123!;Encrypt=False;")
