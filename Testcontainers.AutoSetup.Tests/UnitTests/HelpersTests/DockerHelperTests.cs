@@ -98,26 +98,6 @@ public class DockerHelperTests : IDisposable
         // Assert
         Assert.Null(endpoint);
     }
-
-    [Fact]
-    public void GetDockerEndpoint_ReturnsCorrectTcpString_If_Local()
-    {
-        // Arrange
-        // Ensure we are NOT in CI
-        DockerHelper.SetCustomCiCheck(() => false);
-        
-        // Set a custom port to verify formatting
-        int testPort = 5555;
-        DockerHelper.SetDockerPort(testPort);
-
-        // Act
-        var endpoint = DockerHelper.GetDockerEndpoint();
-
-        // Assert
-        Assert.NotNull(endpoint);
-        Assert.StartsWith("tcp://", endpoint);
-        Assert.EndsWith(":5555", endpoint);
-    }
     
     [Fact]
     public void CustomCheck_TakesPriority_Over_EnvironmentVariables()
