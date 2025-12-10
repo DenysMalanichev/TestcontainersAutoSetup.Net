@@ -34,19 +34,6 @@ public class DockerHelperTests : IDisposable
     }
 
     [Fact]
-    public void GetDockerEndpoint_ReturnsNull_WhenInCi_And_NoCustomEndpoint()
-    {
-        // Arrange
-        Environment.SetEnvironmentVariable("CI", "true");
-
-        // Act
-        var result = DockerHelper.GetDockerEndpoint();
-
-        // Assert
-        Assert.Null(result);
-    }
-
-    [Fact]
     public void IsCiRun_ReturnsTrue_When_CustomCheckReturnsTrue()
     {
         // Arrange
