@@ -11,7 +11,7 @@ namespace Testcontainers.AutoSetup.Core.Helpers;
 /// </summary>
 public static class DockerHelper
 {
-    private const string _gitHubActionsCiEnvVar = "CI";
+    private const string _commonCiEnvVar = "CI";
     private static readonly ImmutableArray<string> specificCiVars = ImmutableArray.Create
         (
             "TF_BUILD",           // Azure DevOps
@@ -124,7 +124,7 @@ public static class DockerHelper
         }
 
         var conversionResult = bool.TryParse(
-            Environment.GetEnvironmentVariable(_gitHubActionsCiEnvVar), out bool env);
+            Environment.GetEnvironmentVariable(_commonCiEnvVar), out bool env);
         if (conversionResult && env)
         {
             return true;

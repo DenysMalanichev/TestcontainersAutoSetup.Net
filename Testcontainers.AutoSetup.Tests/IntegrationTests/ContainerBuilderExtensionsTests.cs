@@ -5,11 +5,13 @@ using Moq;
 using Testcontainers.AutoSetup.Core.Abstractions;
 using Testcontainers.AutoSetup.Core.Extensions;
 using Testcontainers.AutoSetup.Core.Helpers;
+using Testcontainers.AutoSetup.Tests.TestCollections;
 using Testcontainers.MsSql;
 
 namespace Testcontainers.AutoSetup.Tests;
 
 [Trait("Category", "Integration")]
+[Collection(nameof(ParallelTests))]
 public class ContainerBuilderExtensionsTests
 {
     private readonly string? dockerEndpoint = DockerHelper.GetDockerEndpoint();

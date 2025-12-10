@@ -107,7 +107,6 @@ public class DockerHelperTests : IDisposable
         Environment.SetEnvironmentVariable("CI", "true");
         
         // BUT set our custom check to explicitly return FALSE (maybe the user wants to force local mode in CI)
-        // Note: In your current logic, custom check is an OR condition (if true -> true).        
         DockerHelper.SetCustomCiCheck(() => true);
         
         // Act
