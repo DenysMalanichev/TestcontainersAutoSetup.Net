@@ -37,7 +37,11 @@ public class ContainerBuilderExtensionsTests
         {
             builder = builder.WithDockerEndpoint(dockerEndpoint);
         }
-        var container = builder.WithName("MsSQL-testcontainer")
+        if(!DockerHelper.IsCiRun())
+        {
+            builder = builder.WithName("MsSQL-testcontainer");
+        }
+        var container = builder
             .WithPassword("#AdminPass123")
             .WithReuse(reuse: !DockerHelper.IsCiRun())
             .WithLabel("reuse-id", "MsSQL-testcontainer-reuse-hash")
@@ -73,8 +77,11 @@ public class ContainerBuilderExtensionsTests
         {
             builder = builder.WithDockerEndpoint(dockerEndpoint);
         }
+        if(!DockerHelper.IsCiRun())
+        {
+            builder = builder.WithName("GenericMsSQL-testcontainer");
+        }
         var container = builder
-            .WithName("GenericMsSQL-testcontainer")
             .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
             .WithPortBinding(systemPort, 1433)
             .WithEnvironment("ACCEPT_EULA", "Y")
