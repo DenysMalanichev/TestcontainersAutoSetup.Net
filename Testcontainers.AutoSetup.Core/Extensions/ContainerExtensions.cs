@@ -42,5 +42,17 @@ namespace Testcontainers.AutoSetup.Core.Extensions
 
             await seeder.SeedAsync(container, connectionString, cancellationToken);
         }
+
+        public static async Task SeedAsync<TContainer>(
+            this TContainer container,
+            IDbSeeder seeder,
+            Func<TContainer, string> connectionStringProvider,
+            CancellationToken cancellationToken = default)
+            where TContainer : IContainer
+        {
+            var connectionString = connectionStringProvider(container);
+
+            await seeder.SeedAsync(container, connectionString, cancellationToken);
+        }
     }
 }

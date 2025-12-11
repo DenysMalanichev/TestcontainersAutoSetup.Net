@@ -99,7 +99,7 @@ public class EntityFrameworkMigrationTests
                 .WithLabel("reuse-id", "MsSQL-testcontainer-reuse-hash");
         }
         var container = builder
-            .WithPassword("#AdminPass123")     
+            .WithPassword("#AdminPass123")
             .Build();
         await container.StartWithSeedAsync(seeder, (c) => c.GetConnectionString());
 
@@ -126,7 +126,6 @@ public class EntityFrameworkMigrationTests
     public async Task EfSeeder_WithGenericContainerBuilder_MigratesDatabase()
     {
         // Arrange 
-        const int systemPort = 23724;
         const string dbName = "CatalogTest_Generic";
         var efDbSetup = new EfDbSetup
         {
@@ -137,8 +136,6 @@ public class EntityFrameworkMigrationTests
                 .Options),
         };
         var seeder = new EfSeeder(tryRecreateFromDump: false, efDbSetup);
-
-        string connectionString = $"Server={DockerHelper.DockerHostAddress},{systemPort};Database={dbName};User ID=sa;Password=YourStrongPassword123!;Encrypt=False;";
 
         // Act
         var builder = new ContainerBuilder();
@@ -155,11 +152,16 @@ public class EntityFrameworkMigrationTests
         }
         var container = builder
             .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
-            .WithPortBinding(systemPort, 1433)
+            .WithPortBinding(1433, assignRandomHostPort: true)
             .WithEnvironment("ACCEPT_EULA", "Y")
             .WithEnvironment("SA_PASSWORD", "YourStrongPassword123!")            
             .Build();
-        await container.StartWithSeedAsync(seeder, _ => connectionString);
+            
+        await container.StartAsync();
+        var mappedPort = container.GetMappedPublicPort(1433);
+        string connectionString = $"Server={DockerHelper.DockerHostAddress},{mappedPort};Database={dbName};User ID=sa;Password=YourStrongPassword123!;Encrypt=False;";
+
+        await container.SeedAsync(seeder, _ => connectionString);
 
         // Assert
         Assert.NotNull(container);

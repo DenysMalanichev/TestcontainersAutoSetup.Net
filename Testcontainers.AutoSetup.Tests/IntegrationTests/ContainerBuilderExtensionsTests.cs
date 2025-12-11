@@ -59,7 +59,6 @@ public class ContainerBuilderExtensionsTests
     public async Task ContainerBuilderExtensions_WithDbSeeder_HooksInsideTheGenericContainer()
     {
         // Arrange 
-        const int systemPort = 23724;
         IContainer createdContainer = null!;
         var seederMock = new Mock<IDbSeeder>();
         seederMock.Setup(
@@ -85,13 +84,17 @@ public class ContainerBuilderExtensionsTests
         }
         var container = builder
             .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
-            .WithPortBinding(systemPort, 1433)
+            .WithPortBinding(1433, assignRandomHostPort: true)
             .WithEnvironment("ACCEPT_EULA", "Y")
             .WithEnvironment("SA_PASSWORD", "YourStrongPassword123!")
             .Build();
+
+        await container.StartAsync();  
+        var mappedPort = container.GetMappedPublicPort(1433);
+        string connectionString = $"Server={DockerHelper.DockerHostAddress},{mappedPort};User ID=sa;Password=YourStrongPassword123!;Encrypt=False;";
                 
-        await container.StartWithSeedAsync(seederMock.Object,
-                _ => $"Server=localhost,{systemPort};Database=master;User ID=sa;Password=YourStrongPassword123!;Encrypt=False;");
+        await container.SeedAsync(seederMock.Object,
+                _ => connectionString);
 
         // Assert
         Assert.Single(seederMock.Invocations);
