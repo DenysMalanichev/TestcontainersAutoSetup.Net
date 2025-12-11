@@ -1,5 +1,6 @@
 using System.Data.SqlTypes;
 using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -148,13 +149,20 @@ public class EntityFrameworkMigrationTests
             builder = builder
                 .WithName("GenericMsSQL-testcontainer")
                 .WithReuse(reuse: true)
-                .WithLabel("reuse-id", "GenericMsSQL-testcontainer-reuse-hash");
+                .WithLabel("reuse-id", "GenericMsSQL-testcontainer-reuse-hash")
+                .WithPortBinding(23578, 1433);
+                // TODO move port to constant class
+        }
+        else
+        {
+            builder = builder.WithPortBinding(1433, assignRandomHostPort: true);
         }
         var container = builder
-            .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
-            .WithPortBinding(1433, assignRandomHostPort: true)
-            .WithEnvironment("ACCEPT_EULA", "Y")
-            .WithEnvironment("SA_PASSWORD", "YourStrongPassword123!")            
+            .WithImage("mcr.microsoft.com/mssql/server:2019-CU18-ubuntu-20.04")
+            .WithEnvironment("ACCEPT_EULA", "Y")            
+            .WithEnvironment("MSSQL_SA_PASSWORD", "YourStrongPassword123!")
+            .WithEnvironment("SQLCMDPASSWORD", "YourStrongPassword123!")
+            .WithWaitStrategy(Wait.ForUnixContainer().AddCustomWaitStrategy(new WaitUntil()))          
             .Build();
             
         await container.StartAsync();
@@ -173,5 +181,24 @@ public class EntityFrameworkMigrationTests
         var migrationCount = (int)(await historyCmd.ExecuteScalarAsync() ?? throw new SqlNullValueException());
 
         Assert.True(migrationCount > 0, "No migrations were found in the history table.");
+    }
+
+    /// <inheritdoc cref="IWaitUntil" />
+    /// <remarks>
+    /// Uses the sqlcmd utility scripting variables to detect readiness of the MsSql container:
+    /// https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility?view=sql-server-linux-ver15#sqlcmd-scripting-variables.
+    /// </remarks>
+    private sealed class WaitUntil : IWaitUntil
+    {
+        private readonly string[] _command = { "/opt/mssql-tools/bin/sqlcmd", "-Q", "SELECT 1;", "-U", "sa" };
+
+        /// <inheritdoc />
+        public async Task<bool> UntilAsync(IContainer container)
+        {
+            var execResult = await container.ExecAsync(_command)
+                .ConfigureAwait(false);
+
+            return 0L.Equals(execResult.ExitCode);
+        }
     }
 }
