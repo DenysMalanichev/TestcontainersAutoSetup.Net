@@ -41,12 +41,13 @@ public class EntityFrameworkMigrationTests
         }
         if(!DockerHelper.IsCiRun())
         {
-            builder = builder.WithName("MsSQL-testcontainer")
+            builder = builder
+                .WithName("MsSQL-testcontainer")
+                .WithReuse(reuse: true)
                 .WithLabel("reuse-id", "MsSQL-testcontainer-reuse-hash");
         }
         var container = builder
             .WithPassword("#AdminPass123")
-            .WithReuse(reuse: !DockerHelper.IsCiRun())
             .Build();
         await container.StartWithSeedAsync(seeder, (c) => c.GetConnectionString());
 
@@ -88,16 +89,17 @@ public class EntityFrameworkMigrationTests
         var builder = new MsSqlBuilder();
         if(dockerEndpoint is not null)
         {
-            builder = builder.WithDockerEndpoint(dockerEndpoint)
-                .WithLabel("reuse-id", "MsSQL-testcontainer-reuse-hash");
+            builder = builder.WithDockerEndpoint(dockerEndpoint);
         }
         if(!DockerHelper.IsCiRun())
         {
-            builder = builder.WithName("MsSQL-testcontainer");
+            builder = builder
+                .WithName("MsSQL-testcontainer")            
+                .WithReuse(reuse: true)
+                .WithLabel("reuse-id", "MsSQL-testcontainer-reuse-hash");
         }
         var container = builder
-            .WithPassword("#AdminPass123")
-            .WithReuse(reuse: !DockerHelper.IsCiRun())      
+            .WithPassword("#AdminPass123")     
             .Build();
         await container.StartWithSeedAsync(seeder, (c) => c.GetConnectionString());
 
@@ -146,15 +148,16 @@ public class EntityFrameworkMigrationTests
         }
         if(!DockerHelper.IsCiRun())
         {
-            builder = builder.WithName("GenericMsSQL-testcontainer")
+            builder = builder
+                .WithName("GenericMsSQL-testcontainer")
+                .WithReuse(reuse: true)
                 .WithLabel("reuse-id", "GenericMsSQL-testcontainer-reuse-hash");
         }
         var container = builder
             .WithImage("mcr.microsoft.com/mssql/server:2025-latest")
             .WithPortBinding(systemPort, 1433)
             .WithEnvironment("ACCEPT_EULA", "Y")
-            .WithEnvironment("SA_PASSWORD", "YourStrongPassword123!")
-            .WithReuse(reuse: !DockerHelper.IsCiRun())
+            .WithEnvironment("SA_PASSWORD", "YourStrongPassword123!")            
             .Build();
         await container.StartWithSeedAsync(seeder, _ => connectionString);
 
