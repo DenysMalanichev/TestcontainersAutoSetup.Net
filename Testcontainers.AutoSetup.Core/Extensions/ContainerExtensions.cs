@@ -1,16 +1,17 @@
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using Testcontainers.AutoSetup.Core.Abstractions;
+using Testcontainers.AutoSetup.Core.Common.Exceptions;
 
 namespace Testcontainers.AutoSetup.Core.Extensions
 {
     public static class ContainerExtensions
     {
         /// <summary>
-        /// Starts the container, waits for it to be ready, and then executes the provided database seeder.
+        /// Executes the provided database seeder on a running container.
         /// </summary>
         /// <typeparam name="TContainer">The type of the container (must implement <see cref="IContainer"/>).</typeparam>
-        /// <param name="container">The container instance to start and seed.</param>
+        /// <param name="container">The started container instance to seed.</param>
         /// <param name="seeder">The <see cref="IDbSeeder"/> implementation responsible for migrating or populating the database.</param>
         /// <param name="connectionStringProvider">A function to resolve the connection string from the running container instance.</param>
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
@@ -28,21 +29,7 @@ namespace Testcontainers.AutoSetup.Core.Extensions
         /// </para>
         /// </remarks>
         /// <exception cref="OperationCanceledException">Thrown if the operation is canceled.</exception>
-        /// <exception cref="Exception">Propagates any exceptions thrown by <see cref="IContainer.StartAsync"/> or <see cref="IDbSeeder.SeedAsync"/>.</exception>
-        public static async Task StartWithSeedAsync<TContainer>(
-            this TContainer container,
-            IDbSeeder seeder,
-            Func<TContainer, string> connectionStringProvider,
-            CancellationToken cancellationToken = default)
-            where TContainer : IContainer
-        {
-            await container.StartAsync(cancellationToken);
-
-            var connectionString = connectionStringProvider(container);
-
-            await seeder.SeedAsync(container, connectionString, cancellationToken);
-        }
-
+        /// <exception cref="InvalidContainerStateException">If the container is not in a <see cref="TestcontainersStates.Running"/> state</exception>
         public static async Task SeedAsync<TContainer>(
             this TContainer container,
             IDbSeeder seeder,
@@ -50,6 +37,11 @@ namespace Testcontainers.AutoSetup.Core.Extensions
             CancellationToken cancellationToken = default)
             where TContainer : IContainer
         {
+            if(container.State != TestcontainersStates.Running)
+            {
+                throw new InvalidContainerStateException(container, TestcontainersStates.Running);
+            }
+
             var connectionString = connectionStringProvider(container);
 
             await seeder.SeedAsync(container, connectionString, cancellationToken);

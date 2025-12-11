@@ -1,11 +1,9 @@
-using Docker.DotNet.Models;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using Moq;
 using Testcontainers.AutoSetup.Core.Abstractions;
-using Testcontainers.AutoSetup.Core.Extensions;
 using Testcontainers.AutoSetup.Tests.TestCollections;
+using Testcontainers.AutoSetup.Core.Extensions;
+using Testcontainers.AutoSetup.Core.Common.Exceptions;
 
 namespace Testcontainers.AutoSetup.Tests.UnitTests;
 
@@ -20,11 +18,7 @@ public class ContainerBuilderExtensionsTests
         var containerMock = new Mock<IContainer>();
         var seederMock = new Mock<IDbSeeder>();
         var cancellationToken = new CancellationTokenSource().Token;
-        
-        // Setup StartAsync to complete successfully
-        containerMock
-            .Setup(c => c.StartAsync(cancellationToken))
-            .Returns(Task.CompletedTask);
+        containerMock.Setup(c => c.State).Returns(TestcontainersStates.Running);
 
         // Setup a fake connection string provider
         string ExpectedConnectionString = "Server=localhost;Database=TestDb;";
@@ -36,49 +30,14 @@ public class ContainerBuilderExtensionsTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await containerMock.Object.StartWithSeedAsync(
+        await containerMock.Object.SeedAsync(
             seederMock.Object, 
             connectionStringProvider, 
             cancellationToken
         );
 
         // Assert
-        // 1. Verify StartAsync was called once
-        containerMock.Verify(c => c.StartAsync(cancellationToken), Times.Once);
-
-        // 2. Verify SeedAsync was called with the correct connection string
         seederMock.Verify(s => s.SeedAsync(containerMock.Object, ExpectedConnectionString, cancellationToken), Times.Once);
-    }
-
-    [Fact]
-    public async Task StartWithSeedAsync_ContainerStartFails_DoesNotInvokeSeeder()
-    {
-        // Arrange
-        var containerMock = new Mock<IContainer>();
-        var seederMock = new Mock<IDbSeeder>();
-        
-        // Simulate a container crash during startup
-        containerMock
-            .Setup(c => c.StartAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Docker daemon not reachable"));
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
-            containerMock.Object.StartWithSeedAsync(
-                seederMock.Object, 
-                c => "conn-string", 
-                CancellationToken.None
-            )
-        );
-
-        Assert.Equal("Docker daemon not reachable", exception.Message);
-
-        // Verify Seeder was NEVER called
-        seederMock.Verify(s => s.SeedAsync(
-            It.IsAny<IContainer>(), 
-            It.IsAny<string>(), 
-            It.IsAny<CancellationToken>()), 
-            Times.Never);
     }
 
     [Fact]
@@ -86,12 +45,9 @@ public class ContainerBuilderExtensionsTests
     {
         // Arrange
         var containerMock = new Mock<IContainer>();
-        var seederMock = new Mock<IDbSeeder>();
+        containerMock.Setup(c => c.State).Returns(TestcontainersStates.Running);
 
-        // Container starts fine
-        containerMock
-            .Setup(c => c.StartAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        var seederMock = new Mock<IDbSeeder>();
 
         // Seeder crashes (e.g. bad migration script)
         seederMock
@@ -100,7 +56,7 @@ public class ContainerBuilderExtensionsTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<Exception>(() => 
-            containerMock.Object.StartWithSeedAsync(
+            containerMock.Object.SeedAsync(
                 seederMock.Object, 
                 c => "valid-conn-string", 
                 CancellationToken.None
@@ -108,9 +64,6 @@ public class ContainerBuilderExtensionsTests
         );
 
         Assert.Equal("Migration failed: Syntax error", exception.Message);
-        
-        // Verify StartAsync DID happen before the crash
-        containerMock.Verify(c => c.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -121,23 +74,19 @@ public class ContainerBuilderExtensionsTests
         var sqlContainerMock = new Mock<IDatabaseContainer>(); 
         var seederMock = new Mock<IDbSeeder>();
 
-        sqlContainerMock
-            .Setup(c => c.StartAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        sqlContainerMock.Setup(c => c.State)
+            .Returns(It.Is<TestcontainersStates>(s => s != TestcontainersStates.Running));
 
         // Act
-        await sqlContainerMock.Object.StartWithSeedAsync(
+        await Assert.ThrowsAsync<InvalidContainerStateException>(() => sqlContainerMock.Object.SeedAsync(
             seederMock.Object,
-            (IDatabaseContainer c) => 
+            c =>
             {
                 // Assert inside the provider that we got the specific type back, not just IContainer
-                Assert.IsAssignableFrom<IDatabaseContainer>(c); 
+                Assert.IsType<IDatabaseContainer>(c, exactMatch: false); 
                 return "connection-string";
             }
-        );
-
-        // Assert
-        sqlContainerMock.Verify(c => c.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
+        ));
     }
 }
 

@@ -48,7 +48,8 @@ public class ContainerBuilderExtensionsTests
         var container = builder
             .WithPassword("#AdminPass123")
             .Build();
-        await container.StartWithSeedAsync(seederMock.Object, (c) => c.GetConnectionString());
+        await container.StartAsync();
+        await container.SeedAsync(seederMock.Object, (c) => c.GetConnectionString());
 
         // Assert
         Assert.Single(seederMock.Invocations);

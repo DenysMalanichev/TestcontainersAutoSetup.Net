@@ -50,7 +50,8 @@ public class EntityFrameworkMigrationTests
         var container = builder
             .WithPassword("#AdminPass123")
             .Build();
-        await container.StartWithSeedAsync(seeder, (c) => c.GetConnectionString());
+        await container.StartAsync();
+        await container.SeedAsync(seeder, (c) => c.GetConnectionString());
 
         // Assert
         Assert.NotNull(container);
@@ -102,7 +103,8 @@ public class EntityFrameworkMigrationTests
         var container = builder
             .WithPassword("#AdminPass123")
             .Build();
-        await container.StartWithSeedAsync(seeder, (c) => c.GetConnectionString());
+        await container.StartAsync();
+        await container.SeedAsync(seeder, (c) => c.GetConnectionString());
 
         // Assert
         Assert.NotNull(container);
