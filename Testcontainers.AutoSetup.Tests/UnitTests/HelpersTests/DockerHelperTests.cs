@@ -21,13 +21,13 @@ public class DockerHelperTests : IDisposable
     {
         // Arrange
         string custom = "tcp://1.1.1.1:9999";
-        DockerHelper.SetCustomDockerEndpoint(custom);
+        EnvironmentHelper.SetCustomDockerEndpoint(custom);
         
         // Even if we are in CI
         Environment.SetEnvironmentVariable("CI", "true");
 
         // Act
-        var result = DockerHelper.GetDockerEndpoint();
+        var result = EnvironmentHelper.GetDockerEndpoint();
 
         // Assert
         Assert.Equal(custom, result);
@@ -38,10 +38,10 @@ public class DockerHelperTests : IDisposable
     {
         // Arrange
         // The environment is empty (IsCiRun would normally be false)
-        DockerHelper.SetCustomCiCheck(() => true);
+        EnvironmentHelper.SetCustomCiCheck(() => true);
 
         // Act
-        var result = DockerHelper.IsCiRun();
+        var result = EnvironmentHelper.IsCiRun();
 
         // Assert
         Assert.True(result, "IsCiRun should be true when the custom check delegate returns true.");
@@ -51,10 +51,10 @@ public class DockerHelperTests : IDisposable
     public void IsCiRun_ReturnsFalse_When_CustomCheckReturnsFalse_And_NoEnvVars()
     {
         // Arrange
-        DockerHelper.SetCustomCiCheck(() => false);
+        EnvironmentHelper.SetCustomCiCheck(() => false);
 
         // Act
-        var result = DockerHelper.IsCiRun();
+        var result = EnvironmentHelper.IsCiRun();
 
         // Assert
         Assert.False(result, "IsCiRun should be false when no CI env vars are set.");
@@ -67,7 +67,7 @@ public class DockerHelperTests : IDisposable
         Environment.SetEnvironmentVariable("CI", "true");
 
         // Act
-        var result = DockerHelper.IsCiRun();
+        var result = EnvironmentHelper.IsCiRun();
 
         // Assert
         Assert.True(result, "IsCiRun should detect the standard 'CI' variable.");
@@ -80,7 +80,7 @@ public class DockerHelperTests : IDisposable
         Environment.SetEnvironmentVariable("TF_BUILD", "True"); // Azure DevOps
 
         // Act
-        var result = DockerHelper.IsCiRun();
+        var result = EnvironmentHelper.IsCiRun();
 
         // Assert
         Assert.True(result, "IsCiRun should detect vendor specific variables like TF_BUILD.");
@@ -90,10 +90,10 @@ public class DockerHelperTests : IDisposable
     public void GetDockerEndpoint_ReturnsNull_If_InCiMode()
     {
         // Arrange
-        DockerHelper.SetCustomCiCheck(() => true);
+        EnvironmentHelper.SetCustomCiCheck(() => true);
 
         // Act
-        var endpoint = DockerHelper.GetDockerEndpoint();
+        var endpoint = EnvironmentHelper.GetDockerEndpoint();
 
         // Assert
         Assert.Null(endpoint);
@@ -107,10 +107,10 @@ public class DockerHelperTests : IDisposable
         Environment.SetEnvironmentVariable("CI", "true");
         
         // BUT set our custom check to explicitly return FALSE (maybe the user wants to force local mode in CI)
-        DockerHelper.SetCustomCiCheck(() => true);
+        EnvironmentHelper.SetCustomCiCheck(() => true);
         
         // Act
-        var result = DockerHelper.IsCiRun();
+        var result = EnvironmentHelper.IsCiRun();
 
         // Assert
         Assert.True(result);
@@ -127,9 +127,9 @@ public class DockerHelperTests : IDisposable
     private void ResetState()
     { 
         ClearEnvironmentVars();
-        DockerHelper.SetCustomCiCheck(null!);
-        DockerHelper.SetDockerPort(2375);
-        DockerHelper.SetCustomDockerEndpoint(null!); // Clear custom endpoint
+        EnvironmentHelper.SetCustomCiCheck(null!);
+        EnvironmentHelper.SetDockerPort(2375);
+        EnvironmentHelper.SetCustomDockerEndpoint(null!); // Clear custom endpoint
         
         Environment.SetEnvironmentVariable("CI", null);
         Environment.SetEnvironmentVariable("TF_BUILD", null);

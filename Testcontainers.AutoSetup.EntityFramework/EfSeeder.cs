@@ -2,31 +2,32 @@ using System.Globalization;
 using DotNet.Testcontainers.Containers;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.AutoSetup.Core.Abstractions;
+using Testcontainers.AutoSetup.Core.Common.Entities;
 using Testcontainers.AutoSetup.EntityFramework.Entities;
 
 namespace Testcontainers.AutoSetup.EntityFramework;
 
 public class EfSeeder : IDbSeeder
-{
-    private const string SnapshotsDirectory = "Snapshots";
-    
+{    
     private readonly bool _tryRecreateFromDump;
-    private readonly List<EfDbSetup> _dbSetups;
 
-    public EfSeeder(bool tryRecreateFromDump = false, params EfDbSetup[] setups)
+    public EfSeeder(bool tryRecreateFromDump = false)
     {
         _tryRecreateFromDump = tryRecreateFromDump;
-        _dbSetups = [.. setups];
     }
 
-    public async Task SeedAsync(IContainer container, string connectionString, CancellationToken cancellationToken)
+    public async Task SeedAsync(
+        DbSetup dbSetup,
+        IContainer container,
+        string connectionString,
+        CancellationToken cancellationToken = default)
     {
         if (_tryRecreateFromDump)
         {
             await InitializeDatabaseWithDumpAsync(container, connectionString, cancellationToken);
         }
 
-        await ApplyEFMigrationsAsync(connectionString, cancellationToken).ConfigureAwait(false);
+        await ApplyEFMigrationsAsync((EfDbSetup)dbSetup, connectionString, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task InitializeDatabaseWithDumpAsync(IContainer container, string connectionString, CancellationToken cancellationToken)
@@ -57,16 +58,16 @@ public class EfSeeder : IDbSeeder
         // }
     }
 
-    private async Task ApplyEFMigrationsAsync(string connectionString, CancellationToken cancellationToken)
+    private async Task ApplyEFMigrationsAsync(
+        EfDbSetup dbSetup,
+        string connectionString,
+        CancellationToken cancellationToken = default)
     {
-        foreach(var dbSetup in _dbSetups)
-        {
-            var finalConnectionString = dbSetup.BuildConnectionString(connectionString);
+        var finalConnectionString = dbSetup.BuildConnectionString(connectionString);
 
-            using var dbContext = dbSetup.ContextFactory(finalConnectionString);
+        using var dbContext = dbSetup.ContextFactory(finalConnectionString);
 
-            await dbContext.Database.MigrateAsync(cancellationToken);
-        }
+        await dbContext.Database.MigrateAsync(cancellationToken);
     }
 
     private static async Task DropDatabaseIfExistsAsync(string connectionString)
@@ -131,37 +132,37 @@ public class EfSeeder : IDbSeeder
     //     await command.ExecuteNonQueryAsync().ConfigureAwait(false);
     // }
 
-    private static async Task RestoreDatabaseStateAsync(IContainer container, string snapshotFile)
-    {
-        // Execute commands to import the database state from the snapshot file
-        var restoreCommand = $"cd {SnapshotsDirectory} && mysqladmin create Catalog ; mysql Catalog < {snapshotFile}";
-        var result = await container.ExecAsync(new List<string> { "/bin/bash", "-c", restoreCommand }).ConfigureAwait(false);
-        if (result.ExitCode != 0)
-        {
-            throw new InvalidOperationException($"Failed to load a dump: {result.Stdout} {result.Stderr}");
-        }
-    }
+    // private static async Task RestoreDatabaseStateAsync(IContainer container, string snapshotFile)
+    // {
+    //     // Execute commands to import the database state from the snapshot file
+    //     var restoreCommand = $"cd {SnapshotsDirectory} && mysqladmin create Catalog ; mysql Catalog < {snapshotFile}";
+    //     var result = await container.ExecAsync(new List<string> { "/bin/bash", "-c", restoreCommand }).ConfigureAwait(false);
+    //     if (result.ExitCode != 0)
+    //     {
+    //         throw new InvalidOperationException($"Failed to load a dump: {result.Stdout} {result.Stderr}");
+    //     }
+    // }
 
-    private async Task<(string? Name, DateTime? LastWriteTime)> GetLatestSnapshotFileAsync(IContainer container)
-    {
-        var result = await container.ExecAsync(
-            new List<string> { "ls", "-t", SnapshotsDirectory, }
-            ).ConfigureAwait(false);
-        if (result.ExitCode != 0)
-        {
-            return (null!, null!);
-        }
-        var snapshots = result.Stdout.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        var currentSnapshotName = snapshots.FirstOrDefault();
-        if (currentSnapshotName is null)
-        {
-            return (null!, null!);
-        }
-        var snapshotTimeStamp = currentSnapshotName.Split('.')[0]!;
-        if (!DateTime.TryParseExact(snapshotTimeStamp, "yyyy-MM-dd-HH-mm-ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var lastWriteTime))
-        {
-            throw new InvalidOperationException($"Failed to parse snapshot timestamp {snapshotTimeStamp}");
-        }
-        return (currentSnapshotName, lastWriteTime);
-    }
+    // private async Task<(string? Name, DateTime? LastWriteTime)> GetLatestSnapshotFileAsync(IContainer container)
+    // {
+    //     var result = await container.ExecAsync(
+    //         new List<string> { "ls", "-t", SnapshotsDirectory, }
+    //         ).ConfigureAwait(false);
+    //     if (result.ExitCode != 0)
+    //     {
+    //         return (null!, null!);
+    //     }
+    //     var snapshots = result.Stdout.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+    //     var currentSnapshotName = snapshots.FirstOrDefault();
+    //     if (currentSnapshotName is null)
+    //     {
+    //         return (null!, null!);
+    //     }
+    //     var snapshotTimeStamp = currentSnapshotName.Split('.')[0]!;
+    //     if (!DateTime.TryParseExact(snapshotTimeStamp, "yyyy-MM-dd-HH-mm-ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var lastWriteTime))
+    //     {
+    //         throw new InvalidOperationException($"Failed to parse snapshot timestamp {snapshotTimeStamp}");
+    //     }
+    //     return (currentSnapshotName, lastWriteTime);
+    // }
 }

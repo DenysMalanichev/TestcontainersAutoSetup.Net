@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 
 namespace Testcontainers.AutoSetup.Core.Helpers;
 
-/// <summary>
+/// <summary>`
 /// Provides utility methods for discovering the Docker daemon's connection details.
 /// This class handles specific networking quirks required to connect to Docker 
 /// running inside WSL2 on Windows, while providing safe defaults for other platforms.
 /// </summary>
-public static class DockerHelper
+public static class EnvironmentHelper
 {
     private const string _commonCiEnvVar = "CI";
     private static readonly ImmutableArray<string> specificCiVars = ImmutableArray.Create
